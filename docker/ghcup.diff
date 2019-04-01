@@ -1,0 +1,21 @@
+--- ghcup	2019-03-27 15:07:04.837919879 +0000
++++ ghcup.patched	2019-03-27 15:40:40.724598958 +0000
+@@ -1618,10 +1618,15 @@
+         fi
+ 
+ 
++        # NOTE(jkachmar): We need to modify this section to use the gold linker
+         edo ./boot
+-        edo ./configure --prefix="${inst_location}" --with-ghc="${bootstrap_ghc}"
+-        emake -j${JOBS}
+-        emake install
++        edo ./configure \
++          --prefix="${inst_location}"\
++          --with-ghc="${bootstrap_ghc}"\
++          --disable-ld-override \
++          LD=ld.gold
++        edo make -j${JOBS}
++        edo make install
+ 
+         # clean up
+         edo cd ..
