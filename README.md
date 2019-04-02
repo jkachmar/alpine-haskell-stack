@@ -106,7 +106,8 @@ First, ensure that `ghcid` is installed (for example, by running
 Then, compile this project in Docker by running `make build-fast`.
 
 Finally, start a `ghcid` development loop with `make ghcid`; this loop uses
-`stack --docker` to spawn a container in which 
+`stack --docker` to spawn a container in which GHC recompiles everything 
+whenever it detects changes in your code.
 
 Try changing something in `executables/Main.hs` and see the changes reflected in
 `ghcid`!
