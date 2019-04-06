@@ -118,3 +118,7 @@ Try changing something in `executables/Main.hs` and see the changes reflected in
 - Demonstrate static linking
 - Create separate `Dockerfile`s for GHC and combined tooling
   - Automate the creation of these images in CI and host them on Dockerhub
+
+## Related work
+
+- [build most Haskell programs into fully static Linux executables using Nix](https://github.com/nh2/static-haskell-nix)
