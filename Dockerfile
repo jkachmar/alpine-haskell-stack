@@ -109,7 +109,7 @@ FROM base
 
 # Carry build args through to this stage
 ARG GHC_BUILD_TYPE=gmp
-ARG GHC_VERSION=8.6.4
+ARG GHC_VERSION=8.6.5
 
 COPY --from=build-ghc /.ghcup /.ghcup
 COPY --from=build-tooling /usr/bin/stack /usr/bin/stack
