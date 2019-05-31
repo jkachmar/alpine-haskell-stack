@@ -100,10 +100,10 @@ DOWNLOADER="curl"
 # Options passed to the download program.
 DOWNLOADER_OPTS="--fail -O"
 
-# @VARIABLE: SCRIPT_UPDATE_URL
+# @VARIABLE: DOWNLOADER_STDOUT_OPTS
 # @DESCRIPTION:
-# Location to update this script from.
-SCRIPT_UPDATE_URL="https://raw.githubusercontent.com/haskell/ghcup/master/ghcup"
+# Options passed to the download program when printing the content to stdout.
+DOWNLOADER_STDOUT_OPTS="--fail"
 
 # @VARIABLE: GHC_DOWNLOAD_BASEURL
 # @DESCRIPTION:
@@ -121,11 +121,21 @@ JOBS="1"
 # the script name.
 SOURCE="$0"
 
+# @VARIABLE: BASE_DOWNLOAD_URL
+# DESCRIPTION:
+# The base url for downloading stuff like meta files, requirements files etc.
+BASE_DOWNLOAD_URL="https://gitlab.haskell.org/haskell/ghcup/raw/master/"
+
+# @VARIABLE: SCRIPT_UPDATE_URL
+# @DESCRIPTION:
+# Location to update this script from.
+SCRIPT_UPDATE_URL="${BASE_DOWNLOAD_URL}/ghcup"
+
 # @VARIABLE: META_DOWNLOAD_URL
 # DESCRIPTION:
 # The url of the meta file for getting
 # download information for ghc/cabal-install etc.
-META_DOWNLOAD_URL="https://raw.githubusercontent.com/haskell/ghcup/master/.download-urls"
+META_DOWNLOAD_URL="${BASE_DOWNLOAD_URL}/.download-urls"
 
 # @VARIABLE: META_DOWNLOAD_FORMAT
 # DESCRIPTION:
@@ -138,7 +148,7 @@ META_DOWNLOAD_FORMAT="1"
 # DESCRIPTION:
 # The url of the meta file for getting
 # available versions for ghc/cabal-install etc.
-META_VERSION_URL="https://raw.githubusercontent.com/haskell/ghcup/master/.available-versions"
+META_VERSION_URL="${BASE_DOWNLOAD_URL}/.available-versions"
 
 # @VARIABLE: META_VERSION_FORMAT
 # DESCRIPTION:
@@ -150,7 +160,7 @@ META_VERSION_FORMAT="1"
 # @VARIABLE: BUG_URL
 # DESCRIPTION:
 # The url to report bugs to.
-BUG_URL="https://github.com/haskell/ghcup/issues"
+BUG_URL="https://gitlab.haskell.org/haskell/ghcup/issues"
 
 # @VARIABLE: CACHING
 # @DESCRIPTION:
@@ -184,15 +194,15 @@ FLAGS:
                      (these will not be removed by ghcup)
 
 SUBCOMMANDS:
-    install          Install GHC$(${VERBOSE} && printf "\n    compile          Compile and install GHC from source (UNSTABLE!!!)")
-    show             Show current/installed GHC
-    set              Set currently active GHC version
-    list             Show available GHCs and other tools (upstream)
-    upgrade          Upgrade this script in-place
-    rm               Remove an already installed GHC
-    install-cabal    Install cabal-install
-    debug-info       Print debug info (e.g. detected system/distro)
-    changelog        Show the changelog of a GHC release (online)
+    install            Install GHC$(${VERBOSE} && printf "\n    compile          Compile and install GHC from source (UNSTABLE!!!)")
+    set                Set currently active GHC version
+    list               Show available GHCs and other tools
+    upgrade            Upgrade this script in-place
+    rm                 Remove an already installed GHC
+    install-cabal      Install cabal-install
+    debug-info         Print debug info (e.g. detected system/distro)
+    changelog          Show the changelog of a GHC release (online)
+    print-system-reqs  Print an approximation of system requirements
 
 DISCUSSION:
     ghcup installs the Glasgow Haskell Compiler from the official
@@ -269,28 +279,12 @@ USAGE:
     ${SCRIPT} upgrade [FLAGS] [TARGET-LOCATION]
 
 FLAGS:
+    -i, --inplace      Update this script in-place (wherever it's at)
     -h, --help         Prints help information
 
 ARGS:
-    [TARGET-LOCATION]  Where to place the updated script (defaults to directory of the script).
-")
-    exit 1
-}
-
-# @FUNCTION: show_usage
-# @DESCRIPTION:
-# Print the help message for 'ghcup show' to STDERR
-# and exit the script with status code 1.
-show_usage() {
-    (>&2 echo "ghcup-show
-Show the installed/current GHC versions
-
-USAGE:
-    ${SCRIPT} show [FLAGS]
-
-FLAGS:
-    -h, --help         Prints help information
-    -i, --installed    Show installed GHC version only
+    [TARGET-LOCATION]  Where to place the updated script (defaults to ${BIN_LOCATION}).
+                       This is ignored if --inplace is issued as well.
 ")
     exit 1
 }
@@ -404,26 +398,27 @@ DISCUSSION:
 # and exit the script with status code 1.
 list_usage() {
     (>&2 echo "ghcup-list
-Show available GHCs and other tools (from upstream)
+Show available GHCs and other tools
 
 USAGE:
     ${SCRIPT} list
 
 FLAGS:
-    -h, --help                     Prints help information
-    -t, --tool                     Tool to list versions for (e.g. 'ghc' or 'cabal-install').
-                                   Default is showing all tools.
+    -h, --help                             Prints help information
+    -t, --tool <all|ghc|cabal-install>     Tool to list versions for. Default is ghc only.
+    -c, --show-criteria <installed|set>    Show only installed or set tool versions
+    -r, --raw-format                       Raw format, for machine parsing
 
 DISCUSSION:
     Prints tools (e.g. GHC and cabal-install) and their
-    available upstream versions.
+    available/installed/set versions.
 ")
     exit 1
 }
 
 # @FUNCTION: changelog_usage
 # @DESCRIPTION:
-# Print the help message for 'ghcup set' to STDERR
+# Print the help message for 'ghcup changelog' to STDERR
 # and exit the script with status code 1.
 changelog_usage() {
     (>&2 echo "ghcup-changelog
@@ -443,6 +438,30 @@ ARGS:
 DISCUSSION:
     Opens the online changelog for the given GHC version via
     xdg-open.
+")
+    exit 1
+}
+
+# @FUNCTION: print_system_reqs_usage
+# @DESCRIPTION:
+# Print the help message for 'ghcup print-system-reqs' to STDERR
+# and exit the script with status code 1.
+print_system_reqs_usage() {
+    (>&2 echo "ghcup-print-system-reqs
+Print an approximation of system requirements
+
+USAGE:
+    ${SCRIPT} print-system-reqs
+
+FLAGS:
+    -h, --help       Prints help information
+
+DISCUSSION:
+    Just prints an approximation of the system requirements
+    for the 'recommended' GHC version and the 'latest' distro version
+    you are on.
+
+    Review this output carefully!
 ")
     exit 1
 }
@@ -506,7 +525,7 @@ emake() { # avoid re-checking for gmake
 # Print a blue debug message if verbosity is enabled.
 debug_message() {
     if ${VERBOSE} ; then
-        printf "\\033[0;34m%s\\033[0m\\n" "$1"
+        (>&2 printf "\\033[0;34m%s\\033[0m\\n" "$1")
     fi
 }
 
@@ -868,6 +887,45 @@ ghc_already_installed() {
     fi
 }
 
+# @FUNCTION: cabal_already_installed
+# @USAGE: <cabalversion>
+# @DESCRIPTION:
+# Checks whether the specified cabal version
+# has been installed by ghcup already.
+# @RETURN: 0 if cabal is already installed, 1 otherwise
+cabal_already_installed() {
+    [ -z "$1" ] && die "Internal error: no argument given to cabal_already_installed"
+
+    if [ -x "${BIN_LOCATION}/cabal" ] ; then
+        if [ "$("${BIN_LOCATION}/cabal" --numeric-version)" = "$1" ] ; then
+            return 0
+        else
+            return 1
+        fi
+    else
+        return 1
+    fi
+}
+
+# @FUNCTION: tool_already_installed
+# @USAGE: <tool> <cabalversion>
+# @DESCRIPTION:
+# Checks whether the specified tool and version
+# has been installed by ghcup already.
+# @RETURN: 0 if tool is already installed, 1 otherwise
+tool_already_installed() {
+    if [ "$1" = "ghc" ] ; then
+        ghc_already_installed "$2"
+        return $?
+    elif [ "$1" = "cabal-install" ] ; then
+        cabal_already_installed "$2"
+        return $?
+    else
+        return 1
+    fi
+}
+
+
 # @FUNCTION: get_ghc_location
 # @USAGE: <ghcversion>
 # @DESCRIPTION:
@@ -942,6 +1000,16 @@ download_silent() {
         # shellcheck disable=SC2086
         edo ${DOWNLOADER} ${DOWNLOADER_OPTS} "$1" 1> /dev/null 2> /dev/null
     fi
+}
+
+# @FUNCTION: download_to_stdout
+# @USAGE: <url>
+# @DESCRIPTION:
+# Downloads the given url to stdout.
+download_to_stdout() {
+    [ -z "$1" ] && die "Internal error: no argument given to download"
+    # shellcheck disable=SC2086
+    edo ${DOWNLOADER} ${DOWNLOADER_STDOUT_OPTS} "$1" 2> /dev/null
 }
 
 # @FUNCTION: unpack
@@ -1031,6 +1099,9 @@ get_distro_alias() {
         "Alpine Linux"|"Alpine")
             distro_alias=alpine
             ;;
+        "Linux Mint"|"LinuxMint")
+            distro_alias=mint
+            ;;
 	"Amazon Linux AMI")
 	    distro_alias=amazonlinux
 	    ;;
@@ -1059,29 +1130,35 @@ get_distro_alias() {
 #   and
 #   https://stackoverflow.com/a/246128
 #
-# If the file does not exist, just prints the argument unchanged.
+# If the file does not exist, just prints it appended to the current directory.
 # @STDOUT: realpath of the given file
 posix_realpath() {
     [ -z "$1" ] && die "Internal error: no argument given to posix_realpath"
+    current_loop=0
+    max_loops=50
     mysource=$1
 
     while [ -h "${mysource}" ]; do
+        current_loop=$((current_loop+1))
         mydir="$( cd -P "$( dirname "${mysource}" )" > /dev/null 2>&1 && pwd )"
         mysource="$(readlink "${mysource}")"
         [ "${mysource%${mysource#?}}"x != '/x' ] && mysource="${mydir}/${mysource}"
+
+        if [ ${current_loop} -gt ${max_loops} ] ; then
+            (>&2 echo "${1}: Too many levels of symbolic links")
+            break
+        fi
     done
     mydir="$( cd -P "$( dirname "${mysource}" )" > /dev/null 2>&1 && pwd )"
 
     # TODO: better distinguish between "does not exist" and "permission denied"
     if [ -z "${mydir}" ] ; then
         (>&2 echo "${1}: Permission denied")
-    elif [ ! -e "$1" ] ; then
-        echo "${mysource}"
     else
         echo "${mydir%/}/$(basename "${mysource}")"
     fi
 
-    unset mysource mydir posix_realpath_error
+    unset current_loop max_loops mysource mydir
 }
 
 
@@ -1149,6 +1226,7 @@ known_tool_versions() {
 
     mytool=$1
     meta_file="$(get_meta_version_file)"
+    [ -z "${meta_file}" ] && die "failed to get meta file"
 
     awk "
     NF {
@@ -1172,6 +1250,7 @@ known_tool_tags() {
 
     mytool=$1
     meta_file="$(get_meta_version_file)"
+    [ -z "${meta_file}" ] && die "failed to get meta file"
 
     awk "
     NF {
@@ -1208,6 +1287,37 @@ array_contains() {
     unset e element array
     return 1
 }
+
+# @FUNCTION: show_ghc_installed
+# @DESCRIPTION:
+# Prints the currently selected GHC only as version string.
+# @STDOUT: current GHC version
+show_ghc_installed() {
+    current_ghc="${BIN_LOCATION}/ghc"
+    real_ghc=$(posix_realpath "${current_ghc}")
+
+    if [ -L "${current_ghc}" ] ; then # is symlink
+        if [ -e "${real_ghc}" ] ; then # exists (posix_realpath was called)
+            real_ghc="$(basename "${real_ghc}" | sed 's#ghc-##')"
+            printf "%s" "${real_ghc}"
+        else # is a broken symlink
+            red_message "broken symlink"
+        fi
+    fi
+
+    unset real_ghc current_ghc
+}
+
+# @FUNCTION: show_cabal_installed
+# @DESCRIPTION:
+# Prints the currently selected cabal only as version string.
+# @STDOUT: current cabal version
+show_cabal_installed() {
+    if [ -x "${BIN_LOCATION}/cabal" ] ; then
+        "${BIN_LOCATION}/cabal" --numeric-version
+    fi
+}
+
 
 
 
@@ -1261,7 +1371,7 @@ install_ghc() {
             unpack "${download_tarball_name}"
         fi
 
-        edo cd "ghc-${myghcver}"
+        edo cd "./ghc-${myghcver}"
 
         debug_message "Installing GHC into ${inst_location}"
 
@@ -1373,58 +1483,6 @@ upgrade() {
     unset target_location
 }
 
-
-
-    #########################
-    #--[ Subcommand show ]--#
-    #########################
-
-
-# @FUNCTION: show_ghc
-# @DESCRIPTION:
-# Prints the currently installed and selected GHC, in human-friendly
-# format.
-show_ghc() {
-    current_ghc=$(show_ghc_installed)
-
-    echo "Installed GHCs:"
-    for i in "${GHC_LOCATION}"/* ; do
-        if [ -e "${i}" ] ; then
-            echo "    $(basename "${i}")"
-        else # directory is empty
-            echo "    None"
-            exit 0
-        fi
-    done
-
-    if [ -n "${current_ghc}" ] ; then
-        echo
-        echo "Current GHC"
-        echo "    ${current_ghc}"
-    fi
-
-    unset current_ghc i
-}
-
-# @FUNCTION: show_ghc_installed
-# @DESCRIPTION:
-# Prints the currently selected GHC only as version string.
-# @STDOUT: current GHC version
-show_ghc_installed() {
-    current_ghc="${BIN_LOCATION}/ghc"
-    real_ghc=$(posix_realpath "${current_ghc}")
-
-    if [ -L "${current_ghc}" ] ; then # is symlink
-        if [ -e "${real_ghc}" ] ; then # exists (posix_realpath was called)
-            real_ghc="$(basename "${real_ghc}" | sed 's#ghc-##')"
-            printf "%s" "${real_ghc}"
-        else # is a broken symlink
-            red_message "broken symlink"
-        fi
-    fi
-
-    unset real_ghc current_ghc
-}
 
 
 
@@ -1602,7 +1660,7 @@ compile_ghc() {
             unpack "${download_tarball_name}"
         fi
 
-        edo cd "ghc-${myghcver}"
+        edo cd "./ghc-${myghcver}"
 
         if [ -n "${build_config}" ] ; then
             edo cat "${build_config}" > mk/build.mk
@@ -1688,37 +1746,89 @@ print_debug_info() {
 
 
 # @FUNCTION: list
-# @USAGE: [tool]
+# @USAGE: <tool> <raw-format> <criteria>
 # @DESCRIPTION:
 # List available tools and their versions from upstream.
 list() {
     mytool=$1
+    raw_format=$2
+    criteria=$3
 
     meta_file="$(get_meta_version_file)"
+    [ -z "${meta_file}" ] && die "failed to get meta file"
 
-    echo "Available upstream versions:"
-    echo
-    if [ -z "${mytool}" ] ; then
-        awk "
-        NF {
-            if (\$1 != \"#\") {
-                if (\$1 == \"cabal-install\") {
-                    print \$1 \"\\t\" \$2 \"\\t\" \$3
-                } else {
-                    print \$1 \"\\t\\t\" \$2 \"\\t\" \$3
-                }
-            }
-        }" "${meta_file}" || die "awk failed!"
-    else
-        awk "
-        NF {
-            if (\$1 == \"${mytool}\") {
-                print \$1 \"\\t\" \$2 \"\\t\" \$3
-            }
-        }" "${meta_file}" || die "awk failed!"
+    if ! ${raw_format} ; then
+        printf "\\033[1;32m%s\\033[0m\\n" "Available versions:"
     fi
 
-    unset mytool meta_file
+    lines=$(
+        if [ "${mytool}" = "all" ] ; then
+            awk "
+            NF {
+                if (\$1 != \"#\") {
+                    print \$1 \"\\t\" \$2 \"\\t\" \$3
+                }
+            }" "${meta_file}" || die "awk failed!"
+        else
+            awk "
+            NF {
+                if (\$1 == \"${mytool}\") {
+                    print \$1 \"\\t\" \$2 \"\\t\" \$3
+                }
+            }" "${meta_file}" || die "awk failed!"
+        fi
+    )
+
+    _print_me() {
+        if ${raw_format} ; then
+            printf "%s\\n" "$1"
+        else
+            if [ "$2" = "available" ] ; then
+                printf "\\033[0;32m\342\234\224\\033[0m %s\\n" "$1"
+            elif [ "$2" = "set" ] ; then
+                printf "\\033[0;32m\342\234\224 \\033[0;34m%s\\033[0m\\n" "$1"
+            elif [ "$2" = "unavailable" ] ; then
+                printf "\\033[0;31m\342\234\227\\033[0m %s\\n" "$1"
+            fi
+        fi
+    }
+
+    if [ -z "${lines}" ] ; then
+        (>&2 echo "Nothing found for tool ${mytool}")
+        return
+    fi
+
+
+    echo "$lines" | while read -r l; do
+        tool=$(echo "${l}" | cut -f1)
+        version=$(echo "${l}" | cut -f2)
+
+        if [ "${criteria}" = "set" ] ; then
+            if [ "${tool}" = "ghc" ] && [ "${version}" = "$(show_ghc_installed)" ] ; then
+                _print_me "${l}" "set"
+            fi
+
+            if [ "${tool}" = "cabal-install" ] && [ "${version}" = "$(show_cabal_installed)" ] ; then
+                _print_me "${l}" "set"
+            fi
+        else
+            if tool_already_installed "${tool}" "${version}" ; then
+                if [ "${tool}" = "ghc" ] && [ "${version}" = "$(show_ghc_installed)" ] ; then
+                    _print_me "${l}" "set"
+                elif  [ "${tool}" = "cabal-install" ] && [ "${version}" = "$(show_cabal_installed)" ] ; then
+                    _print_me "${l}" "set"
+                else
+                    _print_me "${l}" "available"
+                fi
+            else
+                if [ "${criteria}" != "installed" ] ; then
+                    _print_me "${l}" "unavailable"
+                fi
+            fi
+        fi
+    done
+
+    unset mytool meta_file l lines tool version raw_format installed_only criteria
 }
 
 
@@ -1751,6 +1861,42 @@ changelog() {
     xdg-open "${url}" || die "failed to xdg-open the following url: ${url}"
 
     unset url
+}
+
+
+    ######################################
+    #--[ Subcommand print-system-reqs ]--#
+    ######################################
+
+
+# @FUNCTION: system_reqs_url
+# @USAGE: <distro-alias>
+# @DESCRIPTION:
+# Mapping of distro-alias to system requirements URL.
+system_reqs_url() {
+    [ -z "$1" ] && die "Internal error: no argument given to system_reqs_url"
+
+    case "$1" in
+    "debian"|"ubuntu")
+        printf "%s/.requirements/ghc/ubuntu" "${BASE_DOWNLOAD_URL}"
+        ;;
+    *)
+        printf "%s/.requirements/ghc/default" "${BASE_DOWNLOAD_URL}"
+        ;;
+    esac
+}
+
+
+# @FUNCTION: print_system_reqs
+# @DESCRIPTION:
+# Print the system requirements (approximation).
+print_system_reqs() {
+    mydistro=$(get_distro_alias "$(get_distro_name)")
+    reqs_url=$(system_reqs_url "${mydistro}")
+
+    download_to_stdout "${reqs_url}"
+
+    unset mydistro reqs_url
 }
 
 
@@ -1795,6 +1941,7 @@ while [ $# -gt 0 ] ; do
     -w|--wget)
         DOWNLOADER="wget"
         DOWNLOADER_OPTS=""
+        DOWNLOADER_STDOUT_OPTS="-qO-"
         shift 1
         if [ $# -lt 1 ] ; then
             usage
@@ -1885,35 +2032,23 @@ while [ $# -gt 0 ] ; do
 
            break;;
        upgrade)
+           IN_PLACE=false
            shift 1
            while [ $# -gt 0 ] ; do
                case $1 in
                    -h|--help) upgrade_usage;;
+                   -i|--inplace) IN_PLACE=true
+                       shift 1 ;;
                    *) TARGET_LOCATION=$1
                        break;;
                esac
            done
-           if [ -n "${TARGET_LOCATION}" ] ; then
+           if ${IN_PLACE} ; then
+               upgrade "$(dirname "$(posix_realpath "${SOURCE}")")"
+           elif [ -n "${TARGET_LOCATION}" ] ; then
                upgrade "${TARGET_LOCATION}"
            else
-               upgrade "$(dirname "$(posix_realpath "${SOURCE}")")"
-           fi
-           break;;
-       show)
-           SHOW_INSTALLED=false
-           shift 1
-           while [ $# -gt 0 ] ; do
-               case $1 in
-                   -h|--help) show_usage;;
-                   -i|--installed) SHOW_INSTALLED=true
-                       break;;
-                   *) show_usage;;
-               esac
-           done
-           if ${SHOW_INSTALLED} ; then
-               show_ghc_installed
-           else
-               show_ghc
+               upgrade "${BIN_LOCATION}"
            fi
            break;;
        rm)
@@ -1989,16 +2124,22 @@ while [ $# -gt 0 ] ; do
            print_debug_info
            break;;
        list)
+           RAW_FORMAT=false
+           TOOL="ghc"
            shift 1
            while [ $# -gt 0 ] ; do
                case $1 in
                    -h|--help) list_usage;;
                    -t|--tool) TOOL=$2
                        shift 2;;
+                   -r|--raw-format) RAW_FORMAT=true
+                       shift 1;;
+                   -c|--show-criteria) SHOW_CRITERIA=$2
+                       shift 2;;
                    *) list_usage;;
                esac
            done
-           list "${TOOL}"
+           list "${TOOL}" ${RAW_FORMAT} "${SHOW_CRITERIA}"
            break;;
        changelog)
            shift 1
@@ -2027,6 +2168,16 @@ while [ $# -gt 0 ] ; do
                    die "\"${GHC_VER}\" is not a known version or tag!"
                fi
            fi
+           break;;
+       print-system-reqs)
+           shift 1
+           while [ $# -gt 0 ] ; do
+               case $1 in
+                   -h|--help) print_system_reqs_usage;;
+                   *) print_system_reqs_usage;;
+               esac
+           done
+           print_system_reqs
            break;;
        *) usage;;
        esac
