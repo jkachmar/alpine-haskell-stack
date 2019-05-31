@@ -33,11 +33,6 @@ RUN apk upgrade --no-cache &&\
 
 COPY docker/ghcup /usr/bin/ghcup
 
-# Workaround hardcoded linker settings in GHC's build by patching 'ghcup'
-COPY docker/ghcup.diff /tmp/ghcup.diff
-RUN patch /usr/bin/ghcup < /tmp/ghcup.diff &&\
-    rm /tmp/ghcup.diff
-
 ################################################################################
 # Intermediate layer that builds GHC
 FROM base AS build-ghc
@@ -78,7 +73,7 @@ RUN if [ "${GHC_BUILD_TYPE}" = "gmp" ]; then \
 fi
 
 RUN echo "Compiling and installing GHC" &&\
-    ghcup -v compile -j $(nproc) -c /tmp/build.mk ${GHC_VERSION} ghc-8.4.3 &&\
+    LD=ld.gold ghcup -v compile -j $(nproc) -c /tmp/build.mk ${GHC_VERSION} ghc-8.4.3 &&\
     rm /tmp/build.mk &&\
     echo "Uninstalling GHC bootstrapping compiler" &&\
     apk del ghc &&\
