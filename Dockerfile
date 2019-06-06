@@ -7,12 +7,12 @@ FROM alpine:3.9 AS base
 # 'integer-gmp' (with 'libgmp') or 'integer-simple'
 #
 # Default to building with 'integer-gmp' and 'libgmp' support
-ARG GHC_BUILD_TYPE=gmp
+ARG GHC_BUILD_TYPE
 
-# Must be a valid GHC version number, only tested with 8.4.4 and 8.6.4
+# Must be a valid GHC version number, only tested with 8.4.4, 8.6.4, and 8.6.5
 #
-# Default to GHC version 8.6.4 (latest at the time of writing)
-ARG GHC_VERSION=8.6.4
+# Default to GHC version 8.6.5 (latest at the time of writing)
+ARG GHC_VERSION=8.6.5
 
 # Add ghcup's bin directory to the PATH so that the versions of GHC it builds
 # are available in the build layers
@@ -25,6 +25,7 @@ RUN apk upgrade --no-cache &&\
         curl \
         gcc \
         git \
+        libc-dev \
         xz &&\
     if [ "${GHC_BUILD_TYPE}" = "gmp" ]; then \
         echo "Installing 'libgmp'" &&\
@@ -39,7 +40,7 @@ FROM base AS build-ghc
 
 # Carry build args through to this stage
 ARG GHC_BUILD_TYPE=gmp
-ARG GHC_VERSION=8.6.4
+ARG GHC_VERSION=8.6.5
 
 RUN echo "Install OS packages necessary to build GHC" &&\
     apk add --no-cache \
@@ -111,9 +112,6 @@ COPY --from=build-tooling /usr/bin/stack /usr/bin/stack
 
 # NOTE: 'stack --docker' needs bash + usermod/groupmod (from shadow)
 RUN apk add --no-cache bash shadow
-
-# TODO: This belongs in the 'base' layer
-RUN apk add --no-cache libc-dev
 
 RUN ghcup set ${GHC_VERSION} &&\
     stack config set system-ghc --global true
