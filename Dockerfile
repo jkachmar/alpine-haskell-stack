@@ -19,6 +19,10 @@ ARG GHC_VERSION=8.6.5
 ENV GHCUP_INSTALL_BASE_PREFIX=/
 ENV PATH=/.ghcup/bin:$PATH
 
+# Use the latest version of ghcup (at the time of writing)
+ENV GHCUP_VERSION=0.0.7
+ENV GHCUP_SHA256="b4b200d896eb45b56c89d0cfadfcf544a24759a6ffac029982821cc96b2faedb  ghcup"
+
 # Install the basic required dependencies to run 'ghcup' and 'stack'
 RUN apk upgrade --no-cache &&\
     apk add --no-cache \
@@ -32,7 +36,16 @@ RUN apk upgrade --no-cache &&\
         apk add --no-cache gmp-dev; \
     fi
 
-COPY docker/ghcup /usr/bin/ghcup
+# Download, verify, and install ghcup
+RUN echo "Downloading and installing ghcup" &&\
+    cd /tmp &&\
+    wget -P /tmp/ "https://gitlab.haskell.org/haskell/ghcup/raw/${GHCUP_VERSION}/ghcup" &&\
+    if ! echo -n "${GHCUP_SHA256}" | sha256sum -c -; then \
+        echo "ghcup-${GHCUP_VERSION} checksum failed" >&2 &&\
+        exit 1 ;\
+    fi ;\
+    mv /tmp/ghcup /usr/bin/ghcup &&\
+    chmod +x /usr/bin/ghcup
 
 ################################################################################
 # Intermediate layer that builds GHC
@@ -87,7 +100,8 @@ FROM build-ghc AS build-tooling
 ENV STACK_VERSION=1.9.3
 ENV STACK_SHA256="c9bf6d371b51de74f4bfd5b50965966ac57f75b0544aebb59ade22195d0b7543  stack-${STACK_VERSION}-linux-x86_64-static.tar.gz"
 
-RUN echo "Downloading stack" &&\
+# Download, verify, and install stack
+RUN echo "Downloading and installing stack" &&\
     cd /tmp &&\
     wget -P /tmp/ "https://github.com/commercialhaskell/stack/releases/download/v${STACK_VERSION}/stack-${STACK_VERSION}-linux-x86_64-static.tar.gz" &&\
     if ! echo -n "${STACK_SHA256}" | sha256sum -c -; then \
