@@ -7,9 +7,10 @@ main_exe = demo
 # https://rybczak.net/2016/03/26/how-to-reduce-compilation-times-of-haskell-projects/
 ghc_opts   = -j +RTS -A128m -RTS
 stack_yaml = STACK_YAML="stack.yaml"
+stack      = $(stack_yaml) stack
 
-# All stack commands will be executed in the Docker container
-stack = $(stack_yaml) stack --docker
+# Stack commands that will be executed in the Docker container
+stack_docker = $(stack) --docker
 
 # GHC version to build
 TARGET_GHC_VERSION ?= 8.6.5
@@ -18,24 +19,24 @@ TARGET_GHC_VERSION ?= 8.6.5
 # Standard build (runs in the Docker container)
 .PHONY: build
 build:
-	$(stack) build $(package) \
+	$(stack_docker) build $(package) \
 	--ghc-options='$(ghc_opts)'
 
 # Fast build (-O0) (runs in the Docker container)
 .PHONY: build-fast
 build-fast:
-	$(stack) build $(package) \
+	$(stack_docker) build $(package) \
 	--ghc-options='$(ghc_opts)' \
 	--fast
 
 # Clean up all build artifacts
 clean:
-	$(stack) clean
+	$(stack_docker) clean
 
 # Run ghcid (runs in the Docker container)
 ghcid:
-	ghcid \
-	--command "$(stack) ghci \
+	$(stack) exec -- ghcid \
+	--command "$(stack_docker) ghci \
 			--ghci-options='-fobject-code $(ghc_opts)' \
 			--main-is $(package):$(main_exe)"
 

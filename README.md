@@ -101,7 +101,7 @@ For convenience, I've added some targets to the [Makefile](Makefile) that run
 some common development tasks.
 
 First, ensure that `ghcid` is installed (for example, by running 
-`stack install ghcid`).
+`stack build --copy-compiler-tool ghcid`).
 
 Then, compile this project in Docker by running `make build-fast`.
 
