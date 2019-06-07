@@ -66,8 +66,8 @@ docker-ghc-gmp:
 	  --build-arg GHC_BUILD_TYPE=gmp \
 	  --build-arg GHC_VERSION=$(TARGET_GHC_VERSION) \
 	  --target build-ghc \
-	  --tag alpine-haskell-gmp:build-ghc \
-	  --cache-from alpine-haskell-gmp:build-ghc \
+	  --tag alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
+	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
 	  --file Dockerfile \
 	  .
@@ -80,7 +80,7 @@ docker-tooling-gmp:
 	  --target build-tooling \
 	  --tag alpine-haskell-gmp:build-tooling \
 	  --cache-from alpine-haskell-gmp:build-tooling\
-	  --cache-from alpine-haskell-gmp:build-ghc\
+	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
 	  --file Dockerfile \
 	  .
@@ -90,10 +90,10 @@ docker-image-gmp:
 	docker build \
 	  --build-arg GHC_BUILD_TYPE=gmp \
 	  --build-arg GHC_VERSION=$(TARGET_GHC_VERSION) \
-	  --tag alpine-haskell-gmp:latest \
-	  --cache-from alpine-haskell-gmp:latest \
+	  --tag alpine-haskell-gmp:$(TARGET_GHC_VERSION) \
+	  --cache-from alpine-haskell-gmp:$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:build-tooling \
-	  --cache-from alpine-haskell-gmp:build-ghc \
+	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
 	  --file Dockerfile \
 	  .
@@ -119,8 +119,8 @@ docker-ghc-simple:
 	  --build-arg GHC_BUILD_TYPE=simple \
 	  --build-arg GHC_VERSION=$(TARGET_GHC_VERSION) \
 	  --target build-ghc \
-	  --tag alpine-haskell-simple:build-ghc \
-	  --cache-from alpine-haskell-simple:build-ghc \
+	  --tag alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
+	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
 	  --file Dockerfile \
 	  .
@@ -133,7 +133,7 @@ docker-tooling-simple:
 	  --target build-tooling \
 	  --tag alpine-haskell-simple:build-tooling \
 	  --cache-from alpine-haskell-simple:build-tooling\
-	  --cache-from alpine-haskell-simple:build-ghc\
+	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
 	  --file Dockerfile \
 	  .
@@ -143,10 +143,10 @@ docker-image-simple:
 	docker build \
 	  --build-arg GHC_BUILD_TYPE=simple \
 	  --build-arg GHC_VERSION=$(TARGET_GHC_VERSION) \
-	  --tag alpine-haskell-simple:latest \
-	  --cache-from alpine-haskell-simple:latest \
+	  --tag alpine-haskell-simple:$(TARGET_GHC_VERSION) \
+	  --cache-from alpine-haskell-simple:$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:build-tooling \
-	  --cache-from alpine-haskell-simple:build-ghc \
+	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
 	  --file Dockerfile \
 	  .
