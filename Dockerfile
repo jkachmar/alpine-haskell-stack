@@ -71,6 +71,7 @@ RUN echo "Install OS packages necessary to build GHC" &&\
         ncurses-dev \
         perl \
         python3 \
+        py3-sphinx \
         zlib-dev
 
 COPY docker/build-gmp.mk /tmp/build-gmp.mk
@@ -87,7 +88,9 @@ RUN if [ "${GHC_BUILD_TYPE}" = "gmp" ]; then \
 fi
 
 RUN echo "Compiling and installing GHC" &&\
-    LD=ld.gold ghcup -v compile -j $(nproc) -c /tmp/build.mk ${GHC_VERSION} ghc-8.4.3 &&\
+    LD=ld.gold \
+    SPHINXBUILD=/usr/bin/sphinx-build-3 \
+      ghcup -v compile -j $(nproc) -c /tmp/build.mk ${GHC_VERSION} ghc-8.4.3 &&\
     rm /tmp/build.mk &&\
     echo "Uninstalling GHC bootstrapping compiler" &&\
     apk del ghc &&\
@@ -95,7 +98,7 @@ RUN echo "Compiling and installing GHC" &&\
 
 ################################################################################
 # Intermediate layer that assembles 'stack' tooling
-FROM build-ghc AS build-tooling
+FROM base AS build-tooling
 
 ENV STACK_VERSION=1.9.3
 ENV STACK_SHA256="c9bf6d371b51de74f4bfd5b50965966ac57f75b0544aebb59ade22195d0b7543  stack-${STACK_VERSION}-linux-x86_64-static.tar.gz"
