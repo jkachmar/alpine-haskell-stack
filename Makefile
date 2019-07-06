@@ -1,4 +1,9 @@
 ################################################################################
+# https://www.gnu.org/software/make/manual/html_node/Special-Variables.html
+# https://ftp.gnu.org/old-gnu/Manuals/make-3.80/html_node/make_17.html
+ALPINE_HASKELL_MKFILE_PATH := $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+ALPINE_HASKELL_ROOT_DIR    := $(shell cd $(shell dirname $(ALPINE_HASKELL_MKFILE_PATH)); pwd)
+
 # Common aliases lifted from other Makefiles
 package  = alpine-haskell
 main_exe = demo
@@ -58,8 +63,8 @@ docker-base-gmp:
 	  --target base \
 	  --tag alpine-haskell-gmp:base \
 	  --cache-from alpine-haskell-gmp:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-ghc-gmp
 docker-ghc-gmp:
@@ -70,8 +75,8 @@ docker-ghc-gmp:
 	  --tag alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-tooling-gmp
 docker-tooling-gmp:
@@ -83,8 +88,8 @@ docker-tooling-gmp:
 	  --cache-from alpine-haskell-gmp:build-tooling\
 	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-image-gmp
 docker-image-gmp:
@@ -96,8 +101,8 @@ docker-image-gmp:
 	  --cache-from alpine-haskell-gmp:build-tooling \
 	  --cache-from alpine-haskell-gmp:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-gmp:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 # Build GHC with support for 'integer-simple'
 .PHONY: docker-build-simple
@@ -111,8 +116,8 @@ docker-base-simple:
 	  --target base \
 	  --tag alpine-haskell-simple:base \
 	  --cache-from alpine-haskell-simple:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-ghc-simple
 docker-ghc-simple:
@@ -123,8 +128,8 @@ docker-ghc-simple:
 	  --tag alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-tooling-simple
 docker-tooling-simple:
@@ -136,8 +141,8 @@ docker-tooling-simple:
 	  --cache-from alpine-haskell-simple:build-tooling\
 	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
 
 .PHONY: docker-image-simple
 docker-image-simple:
@@ -149,5 +154,5 @@ docker-image-simple:
 	  --cache-from alpine-haskell-simple:build-tooling \
 	  --cache-from alpine-haskell-simple:build-ghc-$(TARGET_GHC_VERSION) \
 	  --cache-from alpine-haskell-simple:base \
-	  --file Dockerfile \
-	  .
+	  --file $(ALPINE_HASKELL_ROOT_DIR)/Dockerfile \
+	  $(ALPINE_HASKELL_ROOT_DIR)
