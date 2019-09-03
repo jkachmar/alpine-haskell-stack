@@ -1,7 +1,5 @@
 name:                alpine-haskell
 version:             0.1.0.0
-#synopsis:
-#description:
 homepage:            https://github.com/githubuser/alpine-haskell#readme
 license:             BSD3
 author:              Author name here
@@ -14,7 +12,20 @@ extra-source-files:
 dependencies:
   - base >= 4.7 && < 5
 
+flags:
+  static:
+    description: Statically link executables.
+    manual: true
+    default: false
+
 executables:
   demo:
     source-dirs:      executables
     main:             Main.hs
+    when:
+      - condition: flag(static)
+        then:
+          ld-options: -static
+          ghc-options: "-rtsopts -threaded -optc-Os -optl=-pthread -optl=-static -fPIC"
+        else:
+          ghc-options: "-rtsopts -threaded"
