@@ -100,8 +100,8 @@ RUN echo "Compiling and installing GHC" &&\
 # Intermediate layer that assembles 'stack' tooling
 FROM base AS build-tooling
 
-ENV STACK_VERSION=1.9.3
-ENV STACK_SHA256="c9bf6d371b51de74f4bfd5b50965966ac57f75b0544aebb59ade22195d0b7543  stack-${STACK_VERSION}-linux-x86_64-static.tar.gz"
+ENV STACK_VERSION=2.1.3
+ENV STACK_SHA256="4e937a6ad7b5e352c5bd03aef29a753e9c4ca7e8ccc22deb5cd54019a8cf130c  stack-${STACK_VERSION}-linux-x86_64-static.tar.gz"
 
 # Download, verify, and install stack
 RUN echo "Downloading and installing stack" &&\

@@ -27,6 +27,12 @@ build:
 	$(stack_docker) build $(package) \
 	--ghc-options='$(ghc_opts)'
 
+# Static build (runs in the Docker container)
+.PHONY: build-static
+build-static:
+	$(stack_docker) build $(package) --flag $(package):static \
+	--ghc-options='$(ghc_opts)'
+
 # Fast build (-O0) (runs in the Docker container)
 .PHONY: build-fast
 build-fast:
