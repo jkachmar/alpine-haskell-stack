@@ -128,7 +128,7 @@ COPY --from=build-ghc /.ghcup /.ghcup
 COPY --from=build-tooling /usr/bin/stack /usr/bin/stack
 
 # NOTE: 'stack --docker' needs bash + usermod/groupmod (from shadow)
-RUN apk add --no-cache bash shadow
+RUN apk add --no-cache bash shadow openssh-client tar
 
 RUN ghcup set ${GHC_VERSION} &&\
     stack config set system-ghc --global true
