@@ -67,10 +67,6 @@ the build process can be roughly understood as an impl
 
 - `base`
   - Base layer used for all the intermediate build images to follow
-  - Uses a patched version of the [ghcup](https://github.com/haskell/ghcup/)
-  build script
-    - [The patch](docker/ghcup.diff) is used to override `ghcup`'s' 
-    configuration stage to use the `gold` linker, which Alpine requires
   - Contains all OS dependencies required to run `ghcup` and `stack`
 
 - `build-ghc`
