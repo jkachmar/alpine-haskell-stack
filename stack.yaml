@@ -1,8 +1,0 @@
-resolver: lts-13.24
-packages:
-  - .
-
-docker:
-  enable: false
-  repo: "alpine-haskell-gmp:8.6.5"
-  stack-exe: image

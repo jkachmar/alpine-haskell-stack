@@ -1,0 +1,11 @@
+{
+    "default": [{"type": "reject"}],
+    "transports": {
+        "docker": {
+            "docker.io/library/alpine": [{"type": "insecureAcceptAnything"}]
+        },
+        "dir": {
+            "": [{"type": "insecureAcceptAnything"}]
+        }
+    }
+}
