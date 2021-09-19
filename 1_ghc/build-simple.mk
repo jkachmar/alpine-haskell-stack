@@ -1,5 +1,5 @@
 INTEGER_LIBRARY    = integer-simple
-BuildFlavour       = perf-llvm
+BuildFlavour       = perf
 SRC_HC_OPTS        = -O -H64m
 GhcStage1HcOpts    = -O
 GhcStage2HcOpts    = -O2

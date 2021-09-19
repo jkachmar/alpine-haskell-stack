@@ -1,5 +1,5 @@
 SRC_HC_OPTS        = -O -H64m
-BuildFlavour       = perf-llvm
+BuildFlavour       = perf
 GhcStage1HcOpts    = -O
 GhcStage2HcOpts    = -O2
 GhcLibHcOpts       = -O2
