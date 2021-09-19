@@ -144,7 +144,9 @@ buildah run "${container}" \
     rm -rf /tmp/validate_checksum.sh
 
 ################################################################################
-# Write the final image from this container.
+# Generate the final image.
+################################################################################
+
 buildah \
     --signature-policy=./policy.json \
     commit "${container}" "${image}"
