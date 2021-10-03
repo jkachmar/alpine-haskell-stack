@@ -17,37 +17,29 @@ cd "$( git rev-parse --show-toplevel )"
 # cf. https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
 ################################################################################
 
-container="base"
-image="base"
-# NOTE: The logic associated with this will have to change for GHC 9.x and up to
-# support the changes introduced with the switch to `ghc-bignum`.
-numeric="gmp"
+alpine_ver="3.14"
+container="ghcup"
+image="ghcup"
 
 usage="USAGE: $0
     -h           show this help text
+    -a ALPINE_VER override the default Alpine version
+                  default: ${alpine_ver}
     -c CONTAINER override the default container name
                  default: ${container}
-    -i IMAGE     override the default image name
-                 default: ${image}
-    -n NUMERIC   override the numeric library GHC is built against; either 'gmp' or 'simple'
-                 default: ${numeric}"
+    -i IMAGE      override the default image name
+                  default: ${image}"
 
-while getopts "c:i:n:h" opt; do
+while getopts "a:c:i:h" opt; do
   case ${opt} in
+    a ) {
+          alpine_ver="${OPTARG}"
+    };;
     c ) {
           container="${OPTARG}"
     };;
     i ) {
           image="${OPTARG}"
-    };;
-    n ) {
-        if [ "${OPTARG}" = "gmp" ] || [ "${OPTARG}" = "simple" ]; then
-          numeric="${OPTARG}"
-        else
-            echo "Invalid NUMERIC argument (i.e. '-n')." >&2
-            echo "Expected either 'gmp' or 'simple', got '${OPTARG}'" >&2
-            exit 1
-        fi;
     };;
     h ) {
           echo "${usage}"
@@ -65,26 +57,14 @@ if [ "$#" -ne 0 ]; then
   exit 1
 fi
 
-# Add the numeric library to container and image names.
-container="${container}-${numeric}"
-image="${image}-${numeric}"
-
 ################################################################################
 # Container and basic dependencies.
 ################################################################################
 
-# Create the "base" container that will be used elsewhere in the project.
-#
-# NOTE: Alternatively: `buildah commit --rm` (at the end of the script) removes
-# the working container.
-#
-# XXX: Reusing the container by name if it exists seems like not the best idea
-# but it's convenient for development.
 buildah \
     --signature-policy=./policy.json \
     --name "${container}" \
-    from --pull docker.io/library/alpine:3.14 \
-    || true
+    from --pull docker.io/library/alpine:3.14
 
 # Update index files and upgrade the currently installed packages.
 #
@@ -96,23 +76,14 @@ buildah run "${container}" \
 buildah run "${container}" \
     apk add \
       curl \
-      gcc \
-      git \
-      libc-dev \
       xz
-
-if [ "${numeric}" = "gmp" ]; then
-  echo "Installing 'libgmp'."
-  buildah run "${container}" \
-      apk add gmp-dev
-fi;
 
 ################################################################################
 # Download and install `ghcup`.
 ################################################################################
 
-ghcup_version="0.1.16.2"
-ghcup_expected_checksum="d5e43b95ce1d42263376e414f7eb7c5dd440271c7c6cd9bad446fdeff3823893"
+ghcup_version="0.1.17.2"
+ghcup_expected_checksum="e9adb022b9bcfe501caca39e76ae7241af0f30fbb466a2202837a7a578607daf"
 
 # Fetch `ghcup`.
 buildah run "${container}" \
@@ -122,7 +93,7 @@ buildah run "${container}" \
 
 # Copy the checksum validation script into the container...
 buildah copy --chmod 111 "${container}" \
-    ./0_base/validate_checksum.sh \
+    ./ghcup/validate_checksum.sh \
     /tmp/validate_checksum.sh
 
 # ...and verify that the expected and actual actual `ghcup` checksums match.
@@ -147,6 +118,7 @@ buildah run "${container}" \
 # Generate the final image.
 ################################################################################
 
+# NOTE: Tagging the image with the `ghcup_version` for convenience.
 buildah \
     --signature-policy=./policy.json \
-    commit "${container}" "${image}"
+    commit --rm "${container}" "${image}:${ghcup_version}"

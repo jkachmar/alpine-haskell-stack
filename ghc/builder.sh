@@ -17,26 +17,32 @@ cd "$( git rev-parse --show-toplevel )"
 # cf. https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
 ################################################################################
 
-container="builder-ghc"
-image="builder-ghc"
+alpine_ver="3.14"
+container="ghc"
+image="ghc"
 ghc_ver="8.10.7"
 # NOTE: The logic associated with this will have to change for GHC 9.x and up to
 # support the changes introduced with the switch to `ghc-bignum`.
 numeric="gmp"
 
 usage="USAGE: $0
-    -h           show this help text
-    -c CONTAINER override the default container name
-                 default: ${container}
-    -g GHC_VER   override the numeric library GHC is built against; either 'gmp' or 'simple'
-                 default: ${ghc_ver}
-    -i IMAGE     override the default image name
-                 default: ${image}
-    -n NUMERIC   override the numeric library GHC is built against; either 'gmp' or 'simple'
-                 default: ${numeric}"
+    -h            show this help text
+    -a ALPINE_VER override the default Alpine version
+                  default: ${alpine_ver}
+    -c CONTAINER  override the default container name
+                  default: ${container}
+    -g GHC_VER    override the numeric library GHC is built against; either 'gmp' or 'simple'
+                  default: ${ghc_ver}
+    -i IMAGE      override the default image name
+                  default: ${image}
+    -n NUMERIC    override the numeric library GHC is built against; either 'gmp' or 'simple'
+                  default: ${numeric}"
 
-while getopts "c:g:i:n:h" opt; do
+while getopts "a:c:g:i:n:h" opt; do
   case ${opt} in
+    a ) {
+          alpine_ver="${OPTARG}"
+    };;
     c ) {
           container="${OPTARG}"
     };;
@@ -76,7 +82,7 @@ container="${container}-${numeric}-${ghc_ver}"
 image="${image}-${numeric}:${ghc_ver}"
 
 ################################################################################
-# Container and dependencies.
+# Container.
 ################################################################################
 
 # Create the container that will be used to compile GHC from source.
@@ -89,8 +95,19 @@ image="${image}-${numeric}:${ghc_ver}"
 buildah \
     --signature-policy=./policy.json \
     --name "${container}" \
-    from --pull "base-${numeric}" \
-    || true
+    from --pull "docker.io/library/alpine:${alpine_ver}"
+
+################################################################################
+# Copy `ghcup` from another container.
+################################################################################
+
+# XXX: Maybe the `"ghcup"` image name should be fully qualified (i.e.
+# "localhost/ghcup" for an image built locally)...?
+buildah unshare ./ghc/copy_ghcup.sh "ghcup" "${container}"
+
+################################################################################
+# Dependencies.
+################################################################################
 
 buildah run "${container}" \
     apk add --no-cache \
@@ -98,9 +115,11 @@ buildah run "${container}" \
         automake \
         binutils-gold \
         build-base \
+        curl \
         coreutils \
         cpio \
         ghc \
+        git \
         linux-headers \
         libffi-dev \
         musl-dev \
@@ -108,16 +127,17 @@ buildah run "${container}" \
         perl \
         python3 \
         py3-sphinx \
-        zlib-dev
+        zlib-dev \
+        xz
 
 # Copy the appropriate build file, depending on the chosen numeric library.
 if [ "${numeric}" = "gmp" ]; then
   buildah copy --chmod 444 "${container}" \
-      ./1_ghc/build-gmp.mk \
+      ./ghc/build-gmp.mk \
       /tmp/build.mk
 elif [ "${numeric}" = "simple" ]; then
   buildah copy --chmod 444 "${container}" \
-      ./1_ghc/build-simple.mk \
+      ./ghc/build-simple.mk \
       /tmp/build.mk
 else # Should be impossible...
     echo "This code path should be unreachable!" >&2
@@ -128,12 +148,12 @@ fi;
 
 # Copy all patches that will be applied to the GHC source tree.
 buildah copy --chmod 444 "${container}" \
-    ./1_ghc/patches \
+    ./ghc/patches \
     /tmp/patches
 
 # Copy wrapper script that will invoke `ghcup` to compile GHC.
 buildah copy --chmod 111 "${container}" \
-    ./1_ghc/compile_ghc.sh \
+    ./ghc/compile_ghc.sh \
     /tmp/compile_ghc.sh
 
 ################################################################################
@@ -156,16 +176,6 @@ buildah run "${container}" \
 # Generate the final image.
 ################################################################################
 
-# NOTE: Using images for all of these intermediate stages is sort of a
-# carry-over from multi-stage Docker builds.
-#
-# It might be preferable to keep this container around for future build steps
-# and just mount it to copy the files over manually.
-#
-# The tradeoff with this is that the image building process stops being
-# "declarative", since it depends on the intermediate state of a particular
-# container on the host builder's system.
-
 buildah \
     --signature-policy=./policy.json \
-    commit "${container}" "${image}"
+    commit --rm "${container}" "${image}"

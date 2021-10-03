@@ -12,4 +12,5 @@ SPHINXBUILD=/usr/bin/sphinx-build-3 \
         --config /tmp/build.mk \
         --patchdir /tmp/patches \
         --bootstrap-ghc /usr/bin/ghc \
+        --set \
         --version "${ghc_ver}"

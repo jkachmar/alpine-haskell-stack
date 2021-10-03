@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-ghcup_path=$1
+ghcup_path="$1"
 ghcup_expected_checksum="$2"
 
 if ! echo "${ghcup_expected_checksum}  ${ghcup_path}" | sha256sum -c -; then
