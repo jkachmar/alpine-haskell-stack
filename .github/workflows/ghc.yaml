@@ -1,10 +1,9 @@
-name: "`ghcup` image"
+name: "GHC images"
 
-# FIXME: Re-enable this workflow before merging!
 on:
   # FIXME: Remove this before merging!
-  # pull_request: { branches: [ "master" ] }
-  # push: { branches: [ "release" ] }
+  pull_request: { branches: [ "master" ] }
+  push: { branches: [ "release" ] }
 
 env:
   alpine_ver: "3.14"
@@ -13,19 +12,30 @@ jobs:
   build:
     runs-on: "ubuntu-20.04"
 
+    strategy:
+      matrix:
+        ghc_ver: [ "8.10.7" ]
+        numeric: [ "gmp" ]
+
     steps:
       - name: "Check this repository out."
         uses: "actions/checkout@v2"
 
-      - name: "Download `ghcup` and publish an image containing it."
+      - name: "Pull `ghcup` image."
+        run: |
+          # TODO: Avoid having to specify a ghcup version here...
+          buildah pull docker://ghcr.io/jkachmar/ghcup:0.1.17.2
+
+      - name: "Compile GHC and publish an image from the resulting container."
         id: "build-image"
         run: |
           image_id=$(
-            ./ghcup/builder.sh \
+            ./ghc/builder.sh \
               -a "${{ env.alpine_ver }}" \
+              -g "${{ matrix.ghc_ver }}" \
+              -n "${{ matrix.numeric }}" \
             | tail -n 1
           )
-          echo "::set-output name=image_id::${image_id}"
 
           image_name=$(
             buildah images --format "{{.Name}}" ${image_id}
@@ -39,7 +49,7 @@ jobs:
           )
           echo "::set-output name=image_tags::${image_tags}"
 
-      - name: "Push `ghcup` image to the GitHub Container Registry"
+      - name: "Push compiled GHC image to the GitHub Container Registry."
         id: "push-to-ghcr"
         uses: "redhat-actions/push-to-registry@v2"
         with:

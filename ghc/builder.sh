@@ -80,7 +80,7 @@ fi
 
 # Add the GHC version and numeric library to container and image names.
 container="${container}-${numeric}-${ghc_ver}"
-image="${image}-${numeric}:${ghc_ver}"
+image="${image}-${numeric}"
 
 ################################################################################
 # Container.
@@ -201,4 +201,4 @@ buildah config \
 # TMPDIR=./tmp \
 buildah \
     --signature-policy=./policy.json \
-    commit --rm "${container}" "${image}"
+    commit "${container}" "${image}:${ghc_ver}"

@@ -130,4 +130,4 @@ buildah config \
 # NOTE: Tagging the image with the `ghcup_version` for convenience.
 buildah \
     --signature-policy=./policy.json \
-    commit --rm "${container}" "${image}:${ghcup_version}"
+    commit "${container}" "${image}:${ghcup_version}"
