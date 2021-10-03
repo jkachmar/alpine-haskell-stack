@@ -22,12 +22,12 @@ container="ghcup"
 image="ghcup"
 
 usage="USAGE: $0
-    -h           show this help text
+    -h            show this help text
     -a ALPINE_VER override the default Alpine version
                   default: ${alpine_ver}
-    -c CONTAINER override the default container name
-                 default: ${container}
-    -i IMAGE      override the default image name
+    -c CONTAINER  override the default container name
+                  default: ${container}
+    -i IMAGE      override the default image base name
                   default: ${image}"
 
 while getopts "a:c:i:h" opt; do
@@ -106,13 +106,22 @@ buildah run "${container}" \
 buildah run "${container}" \
     mv /tmp/"ghcup-${ghcup_version}" /usr/bin/ghcup
 
-# ...set it to be executable...
+# ...make it executable...
 buildah run "${container}" \
     chmod +x /usr/bin/ghcup
 
-# ...clean up any scripts.
+# ...and clean up any scripts.
 buildah run "${container}" \
     rm -rf /tmp/validate_checksum.sh
+
+# Add `ghcup`'s bin directory to the container's `PATH`.
+#
+# NOTE: This little bit of indirection is needed to get the container's 'PATH',
+# since '$PATH' would be sourced from the host.
+cntr_path=$(buildah run "${container}" printenv PATH)
+buildah config \
+  --env PATH="${cntr_path}:/root/.ghcup/bin" \
+  "${container}"
 
 ################################################################################
 # Generate the final image.

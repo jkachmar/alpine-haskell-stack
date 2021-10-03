@@ -6,6 +6,7 @@ pkgs.mkShell {
     skopeo
 
     # Misc. other dependencies.
+    jq
     nixpkgs-fmt
     shellcheck
   ];

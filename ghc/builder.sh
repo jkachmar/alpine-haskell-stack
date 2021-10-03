@@ -21,6 +21,7 @@ alpine_ver="3.14"
 container="ghc"
 image="ghc"
 ghc_ver="8.10.7"
+
 # NOTE: The logic associated with this will have to change for GHC 9.x and up to
 # support the changes introduced with the switch to `ghc-bignum`.
 numeric="gmp"
@@ -33,7 +34,7 @@ usage="USAGE: $0
                   default: ${container}
     -g GHC_VER    override the numeric library GHC is built against; either 'gmp' or 'simple'
                   default: ${ghc_ver}
-    -i IMAGE      override the default image name
+    -i IMAGE      override the default image base name
                   default: ${image}
     -n NUMERIC    override the numeric library GHC is built against; either 'gmp' or 'simple'
                   default: ${numeric}"
@@ -172,10 +173,32 @@ buildah run "${container}" \
 buildah run "${container}" \
     rm -rf "/tmp/{build.mk,compile_ghc.sh,patches}"
 
+# Add `ghcup`'s bin directory to the container's `PATH`.
+#
+# NOTE: This little bit of indirection is needed to get the container's 'PATH',
+# since '$PATH' would be sourced from the host.
+cntr_path=$(buildah run "${container}" printenv PATH)
+buildah config \
+  --env PATH="${cntr_path}:/root/.ghcup/bin" \
+  "${container}"
+
 ################################################################################
 # Generate the final image.
 ################################################################################
 
+# NOTE: `buildah` uses `/var/tmp` (or $TMPDIR) as a staging area when assembling
+# images.
+#
+# On systems where `/var/tmp` is mounted as `tmpfs`, this can cause `buildah` to
+# run out of space.
+#
+# In this case, create some `./tmp` directory and use it with `TMPDIR=./tmp`
+# before running `buildah commit`.
+#
+# e.g. Uncomment the following:
+#
+# mkdir -p ./tmp
+# TMPDIR=./tmp \
 buildah \
     --signature-policy=./policy.json \
     commit --rm "${container}" "${image}"
