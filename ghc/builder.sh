@@ -20,7 +20,7 @@ cd "$( git rev-parse --show-toplevel )"
 alpine_ver="3.14"
 container="ghc"
 image="ghc"
-ghc_ver="8.10.7"
+ghc_version="8.10.7"
 
 # NOTE: The logic associated with this will have to change for GHC 9.x and up to
 # support the changes introduced with the switch to `ghc-bignum`.
@@ -33,7 +33,7 @@ usage="USAGE: $0
     -c CONTAINER  override the default container name
                   default: ${container}
     -g GHC_VER    override the numeric library GHC is built against; either 'gmp' or 'simple'
-                  default: ${ghc_ver}
+                  default: ${ghc_version}
     -i IMAGE      override the default image base name
                   default: ${image}
     -n NUMERIC    override the numeric library GHC is built against; either 'gmp' or 'simple'
@@ -48,7 +48,7 @@ while getopts "a:c:g:i:n:h" opt; do
           container="${OPTARG}"
     };;
     g ) {
-          ghc_ver="${OPTARG}"
+          ghc_version="${OPTARG}"
     };;
     i ) {
           image="${OPTARG}"
@@ -79,7 +79,7 @@ if [ "$#" -ne 0 ]; then
 fi
 
 # Add the GHC version and numeric library to container and image names.
-container="${container}-${numeric}-${ghc_ver}"
+container="${container}-${numeric}-${ghc_version}"
 image="${image}-${numeric}"
 
 ################################################################################
@@ -163,7 +163,7 @@ buildah copy --chmod 111 "${container}" \
 
 # Compile GHC.
 buildah run "${container}" \
-    ./tmp/compile_ghc.sh "${ghc_ver}"
+    ./tmp/compile_ghc.sh "${ghc_version}"
 
 # Uninstall the bootstrapping compiler.
 buildah run "${container}" \
@@ -197,8 +197,8 @@ buildah config \
 #
 # e.g. Uncomment the following:
 #
-# mkdir -p ./tmp
-# TMPDIR=./tmp \
-buildah \
+mkdir -p ./tmp
+TMPDIR=./tmp \
+  buildah \
     --signature-policy=./policy.json \
-    commit "${container}" "${image}:${ghc_ver}"
+    commit --rm "${container}" "${image}:${ghc_version}"

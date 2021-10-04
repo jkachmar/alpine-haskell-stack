@@ -127,7 +127,12 @@ buildah config \
 # Generate the final image.
 ################################################################################
 
-# NOTE: Tagging the image with the `ghcup_version` for convenience.
 buildah \
     --signature-policy=./policy.json \
-    commit "${container}" "${image}:${ghcup_version}"
+    commit --rm "${container}" "${image}:${ghcup_version}"
+
+# NOTE: Tagging the image with the `ghcup_version` for convenience.
+#
+# This is going to produce an image with the newest `ghcup` most of the time
+# anyway.
+buildah tag "${image}:${ghcup_version}" "${image}:latest"
