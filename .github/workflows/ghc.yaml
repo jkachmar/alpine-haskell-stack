@@ -2,8 +2,8 @@ name: "GHC images"
 
 on:
   # FIXME: Remove this before merging!
-  pull_request: { branches: [ "master" ] }
-  push: { branches: [ "release" ] }
+  # pull_request: { branches: [ "master" ] }
+  # push: { branches: [ "release" ] }
 
 env:
   alpine_ver: "3.14"
