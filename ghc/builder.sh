@@ -54,13 +54,13 @@ while getopts "a:c:g:i:n:h" opt; do
           image="${OPTARG}"
     };;
     n ) {
-        if [ "${OPTARG}" = "gmp" ] || [ "${OPTARG}" = "simple" ]; then
-          numeric="${OPTARG}"
-        else
+          if [ "${OPTARG}" = "gmp" ] || [ "${OPTARG}" = "simple" ]; then
+            numeric="${OPTARG}"
+          else
             echo "Invalid NUMERIC argument (i.e. '-n')." >&2
             echo "Expected either 'gmp' or 'simple', got '${OPTARG}'" >&2
             exit 1
-        fi;
+          fi;
     };;
     h ) {
           echo "${usage}"
@@ -87,12 +87,6 @@ image="${image}-${numeric}"
 ################################################################################
 
 # Create the container that will be used to compile GHC from source.
-#
-# NOTE: Alternatively: `buildah commit --rm` (at the end of the script) removes
-# the working container.
-#
-# XXX: Reusing the container by name if it exists seems like not the best idea
-# but it's convenient for development.
 buildah \
     --signature-policy=./policy.json \
     --name "${container}" \
@@ -102,9 +96,7 @@ buildah \
 # Copy `ghcup` from another container.
 ################################################################################
 
-# XXX: Maybe the `"ghcup"` image name should be fully qualified (i.e.
-# "localhost/ghcup" for an image built locally)...?
-buildah unshare ./ghc/copy_ghcup.sh "ghcup" "${container}"
+buildah unshare ./common/copy_ghcup.sh "ghcup" "${container}"
 
 ################################################################################
 # Dependencies.

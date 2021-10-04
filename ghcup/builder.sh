@@ -58,9 +58,10 @@ if [ "$#" -ne 0 ]; then
 fi
 
 ################################################################################
-# Container and basic dependencies.
+# Container.
 ################################################################################
 
+# Create the container that will be used to download `ghcup`.
 buildah \
     --signature-policy=./policy.json \
     --name "${container}" \
@@ -93,7 +94,7 @@ buildah run "${container}" \
 
 # Copy the checksum validation script into the container...
 buildah copy --chmod 111 "${container}" \
-    ./ghcup/validate_checksum.sh \
+    ./common/validate_checksum.sh \
     /tmp/validate_checksum.sh
 
 # ...and verify that the expected and actual actual `ghcup` checksums match.
