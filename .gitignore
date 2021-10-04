@@ -1,2 +1,4 @@
 .direnv
-tmp
+.tmp
+authfile.json
+secrets

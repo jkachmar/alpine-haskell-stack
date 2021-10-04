@@ -191,14 +191,12 @@ buildah config \
 #
 # On systems where `/var/tmp` is mounted as `tmpfs`, this can cause `buildah` to
 # run out of space.
-#
-# In this case, create some `./tmp` directory and use it with `TMPDIR=./tmp`
-# before running `buildah commit`.
-#
-# e.g. Uncomment the following:
-#
 mkdir -p ./tmp
 TMPDIR=./tmp \
-  buildah \
-    --signature-policy=./policy.json \
-    commit --rm "${container}" "${image}:${ghc_version}"
+  image_id=$(
+    buildah \
+      --signature-policy=./policy.json \
+      commit --rm "${container}" "${image}:${ghc_version}"
+  )
+rm -rf ./tmp
+echo "${image_id}"
