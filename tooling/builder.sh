@@ -39,11 +39,11 @@ usage="USAGE: $0
                   default: ${alpine_ver}
     -c CONTAINER  override the default container name
                   default: ${container}
-    -g GHC_VER    override the numeric library GHC is built against; either 'gmp' or 'simple'
+    -g GHC_VER    override the version of GHC to be compiled
                   default: ${ghc_version}
     -i IMAGE      override the default image base name
                   default: ${image}
-    -n NUMERIC    override the numeric library GHC is built against; either 'gmp' or 'simple'
+    -n NUMERIC    override the numeric library GHC is built against; either 'gmp' or 'native'
                   default: ${numeric}
     -C CABAL_VER  override the default version of 'cabal-install' to build
                   default: ${cabal_version}
@@ -67,11 +67,11 @@ while getopts "a:c:g:i:n:C:S:H:h" opt; do
         image="${OPTARG}"
     };;
     n ) {
-        if [ "${OPTARG}" = "gmp" ] || [ "${OPTARG}" = "simple" ]; then
+        if [ "${OPTARG}" = "gmp" ] || [ "${OPTARG}" = "native" ]; then
           numeric="${OPTARG}"
         else
           echo "Invalid NUMERIC argument (i.e. '-n')." >&2
-          echo "Expected either 'gmp' or 'simple', got '${OPTARG}'" >&2
+          echo "Expected either 'gmp' or 'native', got '${OPTARG}'" >&2
           exit 1
         fi;
     };;
