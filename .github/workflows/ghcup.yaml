@@ -1,0 +1,54 @@
+name: "`ghcup` image"
+
+# FIXME: Re-enable this workflow before merging!
+on:
+  # FIXME: Remove this before merging!
+  # pull_request: { branches: [ "master" ] }
+  # push: { branches: [ "release" ] }
+
+env:
+  alpine_ver: "3.14"
+
+jobs:
+  build:
+    runs-on: "ubuntu-20.04"
+
+    steps:
+      - name: "Check this repository out."
+        uses: "actions/checkout@v2"
+
+      - name: "Download `ghcup` and publish an image containing it."
+        id: "build-image"
+        run: |
+          image_id=$(
+            ./ghcup/builder.sh \
+              -a "${{ env.alpine_ver }}" \
+            | tail -n 1
+          )
+          echo "::set-output name=image_id::${image_id}"
+
+          image_name=$(
+            buildah images --format "{{.Name}}" ${image_id}
+          )
+          # NOTE: This parameter expansion drops the leading `localhost/` that
+          # `buildah` (and other OCI tools) prepend to local image names.
+          echo "::set-output name=image_name::${image_name#*/}"
+
+          image_tags=$(
+            buildah images --format "{{.Tag}}" ${image_id}
+          )
+          echo "::set-output name=image_tags::${image_tags}"
+
+      - name: "Push `ghcup` image to the GitHub Container Registry"
+        id: "push-to-ghcr"
+        uses: "redhat-actions/push-to-registry@v2"
+        with:
+          image: "${{ steps.build-image.outputs.image_name }}"
+          tags: "${{ steps.build-image.outputs.image_tags }}"
+          registry: "ghcr.io/${{ github.repository_owner }}"
+          username: "${{ github.actor }}"
+          password: "${{ github.token }}"
+
+      - name: "Print image URL."
+        run: |
+          echo "Image pushed to ${{ steps.push-to-ghcr.outputs.registry-paths }}"

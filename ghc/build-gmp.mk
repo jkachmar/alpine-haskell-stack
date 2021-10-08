@@ -1,6 +1,5 @@
-INTEGER_LIBRARY    = integer-simple
-BuildFlavour       = perf-llvm
 SRC_HC_OPTS        = -O -H64m
+BuildFlavour       = perf
 GhcStage1HcOpts    = -O
 GhcStage2HcOpts    = -O2
 GhcLibHcOpts       = -O2
@@ -8,6 +7,7 @@ GhcWithLlvmCodeGen = YES
 BUILD_PROF_LIBS    = YES
 SplitObjs          = NO
 SplitSections      = YES
+BUILD_MAN          = NO
 BUILD_SPHINX_HTML  = YES
 BUILD_SPHINX_PDF   = NO
 HADDOCK_DOCS       = YES

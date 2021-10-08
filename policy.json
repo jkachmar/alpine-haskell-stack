@@ -1,0 +1,14 @@
+{
+    "default": [{"type": "reject"}],
+    "transports": {
+        "docker": {
+            "docker.io/library/alpine": [{"type": "insecureAcceptAnything"}],
+            "ghcr.io/jkachmar/ghcup": [{"type": "insecureAcceptAnything"}],
+            "ghcr.io/jkachmar/ghc-gmp": [{"type": "insecureAcceptAnything"}],
+            "ghcr.io/jkachmar/ghc-native": [{"type": "insecureAcceptAnything"}]
+        },
+        "dir": {
+            "": [{"type": "insecureAcceptAnything"}]
+        }
+    }
+}
