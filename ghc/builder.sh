@@ -18,8 +18,8 @@ cd "$( git rev-parse --show-toplevel )"
 ################################################################################
 
 alpine_ver="3.14"
-container="ghc"
-image="ghc"
+container="alpine-ghc"
+image="alpine-ghc"
 ghc_version="8.10.7"
 
 # NOTE: The logic associated with this will have to change for GHC 9.x and up to
